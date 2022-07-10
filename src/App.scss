@@ -1,0 +1,32 @@
+.App {
+  text-align: center;
+  overflow: hidden;
+  min-height: 100vh;
+  background-color: #855703;
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    .App-logo {
+      height: 5vmin;
+      pointer-events: none;
+      @media (prefers-reduced-motion: no-preference) {
+        animation: App-logo-spin infinite 20s linear;
+      }
+      @keyframes App-logo-spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    }
+  }
+  .body {
+    padding: 0 38%;
+    padding-top: 3rem;
+  }
+}

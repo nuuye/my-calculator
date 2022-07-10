@@ -1,0 +1,26 @@
+.container {
+  height: 100%;
+  width: 100%;
+  background-color: #282c34;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  &.whiteBackGround {
+    background-color: #c6c6cf;
+    span {
+      color: black;
+    }
+  }
+
+  span {
+    color: white;
+    font-size: medium;
+    font-weight: 550;
+  }
+}
+
+.container:hover {
+  background-color: #25272c;
+}
