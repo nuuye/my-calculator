@@ -18,6 +18,9 @@ type Props = {};
 function Calculator({}: Props) {
   const [value, setValue] = useState<number>(0);
   const [display, setDisplay] = useState<string[]>([]);
+  const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const signs = ['+', '-', '*', '÷'];
+  const lastDisplayedElement = display[display.length - 1];
 
   const characterList: Array<string> = [
     '%',
@@ -51,29 +54,85 @@ function Calculator({}: Props) {
   };
 
   const calculateDisplay = () => {
-    return evaluate(display.join(' '));
+    for (var i = 0; i < display.length; i++) {
+      if (display[i] == '÷') {
+        display[i] = '/';
+      } else if (display[i] == 'x') {
+        display[i] = '*';
+      } else if (display[i] == '²') {
+        display[i] = '^2';
+      } else if (display[i].includes(',')) {
+        display[i] = display[i].replace(/,/g, '.');
+        console.log('here : ', display[i]);
+      }
+    }
+    return evaluate(display.join(' ')).toString();
+  };
+
+  const verifyNumber = (element: string) => {
+    for (var i = 0; i < element.length; i++) {
+      if (!numbers.includes(element[i])) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+  };
+
+  const eraseLastNumber = () => {
+    const slicedLastChar = lastDisplayedElement.slice(0, -1); //2
+    display.pop();
+    display.push(slicedLastChar);
   };
 
   const handleClick = (event: any) => {
-    switch (event.target.innerText) {
+    const actualElement = event.target.innerText;
+    const transformChar = () => {
+      if (actualElement == 'x²') {
+        return '²';
+      } else {
+        return actualElement;
+      }
+    };
+    switch (actualElement) {
+      case '+':
+      case '-':
+      case 'x':
+      case '÷':
+        addElementToDisplay(actualElement);
+        break;
       case '<-':
-        display.pop();
+        eraseLastNumber();
+        setDisplay([...display]);
         break;
       case 'CE':
         setDisplay([]);
         break;
+      case 'C':
+        setDisplay([]);
+        break;
       case '=':
-        // setDisplay(calculateDisplay());
+        setDisplay([calculateDisplay().replace(/\./g, ',')]);
         break;
       default:
-        addElementToDisplay(event.target.innerText);
+        if (
+          display.length > 0 &&
+          verifyNumber(lastDisplayedElement) &&
+          actualElement != 'x²'
+        ) {
+          const tempLastNumber = display.pop() + actualElement;
+          console.log('lastNumber : ', tempLastNumber);
+          addElementToDisplay(tempLastNumber);
+        } else {
+          addElementToDisplay(transformChar());
+        }
         break;
     }
   };
-  const testArray = ['4', '*', '7'];
+  const testString = '103.5';
   useEffect(() => {
-    console.log(display);
-    console.log('evaluate : ', evaluate(testArray.join(' ')));
+    console.log('display : ', display);
+    // console.log('regex  : ', testString.replace(/\./g, ','), testString);
   }, [display]);
 
   return (
