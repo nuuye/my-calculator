@@ -33,7 +33,7 @@ function Calculator({}: Props) {
     '%',
     'CE',
     'C',
-    '<-',
+    '⌫',
     '1/x',
     'x²',
     '²√x',
@@ -150,7 +150,7 @@ function Calculator({}: Props) {
           addElementToHistory(actualElement);
         }
         break;
-      case '<-':
+      case '⌫':
         if (!signs.includes(lastHistoryElement)) {
           if (lastHistoryElement != '=') {
             eraseLastNumber();
@@ -256,7 +256,7 @@ function Calculator({}: Props) {
           </span>
         </div>
       </header>
-      <body>
+      <div className="body">
         {characterList.map((character, key) => (
           <Button
             key={key}
@@ -266,7 +266,7 @@ function Calculator({}: Props) {
             }}
           />
         ))}
-      </body>
+      </div>
     </div>
   );
 }
@@ -280,7 +280,7 @@ Couper après après la virgule si trop de 0 exemple : 12.60000001 -> 12.6
 Réduire la font-size si trop de nombres : somme des char = 13 on reduit
 CE et C différence
 Resize la calculette
-Responsive
+nombres negatifs quand on delete il reste le -
 Bonus :
 Espacer les nombres quand nécessaire : 100 000 / 50 000 / 5 000
 */
