@@ -17,7 +17,7 @@ import {
 type Props = {};
 function Calculator({}: Props) {
   const [value, setValue] = useState<number>(0);
-  const [display, setDisplay] = useState<string[]>([]);
+  const [display, setDisplay] = useState<string[]>(['0']);
   const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   const signs = ['+', '-', '*', '÷'];
   const lastDisplayedElement = display[display.length - 1];
@@ -80,7 +80,10 @@ function Calculator({}: Props) {
   };
 
   const eraseLastNumber = () => {
-    const slicedLastChar = lastDisplayedElement.slice(0, -1); //2
+    if (display.length == 1 && display[0] == '0') {
+      return;
+    }
+    const slicedLastChar = lastDisplayedElement.slice(0, -1);
     display.pop();
     display.push(slicedLastChar);
   };
@@ -103,19 +106,27 @@ function Calculator({}: Props) {
         break;
       case '<-':
         eraseLastNumber();
-        setDisplay([...display]);
+        if (display.length == 0 || (display.length == 1 && display[0] == '')) {
+          setDisplay(['0']);
+        } else {
+          setDisplay([...display]);
+        }
         break;
       case 'CE':
-        setDisplay([]);
+        setDisplay(['0']);
         break;
       case 'C':
-        setDisplay([]);
+        setDisplay(['0']);
         break;
       case '=':
         setDisplay([calculateDisplay().replace(/\./g, ',')]);
         break;
       default:
-        if (
+        if (display.length == 1 && display[0] == '0') {
+          display.pop();
+          addElementToDisplay(actualElement);
+        } else if (
+          //if lastElement = number : add to it
           display.length > 0 &&
           verifyNumber(lastDisplayedElement) &&
           actualElement != 'x²'
@@ -124,6 +135,7 @@ function Calculator({}: Props) {
           console.log('lastNumber : ', tempLastNumber);
           addElementToDisplay(tempLastNumber);
         } else {
+          // add to the next place , if x² it adds ² (so it shows ²)
           addElementToDisplay(transformChar());
         }
         break;
@@ -132,7 +144,6 @@ function Calculator({}: Props) {
   const testString = '103.5';
   useEffect(() => {
     console.log('display : ', display);
-    // console.log('regex  : ', testString.replace(/\./g, ','), testString);
   }, [display]);
 
   return (
@@ -161,3 +172,10 @@ function Calculator({}: Props) {
 }
 
 export default Calculator;
+
+//TODO
+/*
+Bloquer le delete 0 au début et le remplacer par la valeur du premier elem cliqué pour pas avoir 02
+Bloquer l'ajout de virgule si le nombre actuelle possède déjà une virgule
+SQRT
+*/
