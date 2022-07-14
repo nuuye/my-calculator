@@ -9,7 +9,10 @@
   border-color: #282c34;
   cursor: pointer;
   &.whiteBackGround {
-    background-color: #c6c6cf;
+    background-color: #8b8b8c;
+    &.whiteBackGround:hover{
+    background-color: #666666;
+    }
     span {
       color: black;
     }
@@ -25,3 +28,4 @@
 .container:hover {
   background-color: #25272c;
 }
+

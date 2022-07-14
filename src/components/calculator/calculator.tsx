@@ -13,6 +13,7 @@ import {
   pow,
   round,
   sqrt,
+  string,
 } from 'mathjs';
 
 type Props = {};
@@ -20,8 +21,9 @@ function Calculator({}: Props) {
   const [history, setHistory] = useState<string[]>([]);
   const [display, setDisplay] = useState<string[]>(['0']);
   const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-  const signs = ['+', '-', '*', '÷'];
+  const signs = ['+', '-', '*', '÷', 'x', '/'];
   const lastDisplayedElement = display[display.length - 1];
+  const lastHistoryElement = history[history.length - 1];
   const contentContainerWidth =
     document.getElementById('contentContainer')?.offsetWidth;
   const lineOfElementsWidth =
@@ -58,19 +60,33 @@ function Calculator({}: Props) {
     display && setDisplay([...display, element]);
   };
 
-  const calculateDisplay = () => {
-    for (var i = 0; i < display.length; i++) {
-      if (display[i] == '÷') {
-        display[i] = '/';
-      } else if (display[i] == 'x') {
-        display[i] = '*';
-      } else if (display[i] == '²') {
-        display[i] = '^2';
-      } else if (display[i].includes(',')) {
-        display[i] = display[i].replace(/,/g, '.');
+  const addElementToHistory = (element: string) => {
+    history && setHistory([...history, element]);
+  };
+
+  const calculateHistory = () => {
+    for (var i = 0; i < history.length; i++) {
+      if (history[i] == '÷') {
+        history[i] = '/';
+      } else if (history[i] == 'x') {
+        history[i] = '*';
+      } else if (history[i] == '²') {
+        history[i] = '^2';
+      } else if (history[i].includes(',')) {
+        history[i] = history[i].replace(/,/g, '.');
       }
     }
-    return evaluate(display.join(' ')).toString();
+    return evaluate(history.join(' ')).toString();
+  };
+
+  const replaceAlternativeSigns = (stringList: string[]) => {
+    for (var i = 0; i < stringList.length; i++) {
+      if (stringList[i] == '/') {
+        stringList[i] = '÷';
+      } else if (stringList[i] == '*') {
+        stringList[i] = 'x';
+      }
+    }
   };
 
   const verifyNumber = (element: string) => {
@@ -87,22 +103,15 @@ function Calculator({}: Props) {
     if (display.length == 1 && display[0] == '0') {
       return;
     }
-    const slicedLastChar = lastDisplayedElement.slice(0, -1);
+    const slicedLastCharForDisplay = lastDisplayedElement.slice(0, -1);
     display.pop();
-    display.push(slicedLastChar);
+    display.push(slicedLastCharForDisplay);
+    const slicedLastCharForHistory = lastHistoryElement.slice(0, -1);
+    history.pop();
+    history.push(slicedLastCharForHistory);
   };
 
   const hasToBeReduced = () => {
-    // let charCounter = 0;
-    // display.forEach((element) => {
-    //   for (var char = 0; char < element.length; char++) {
-    //     charCounter++;
-    //   }
-    // });
-    // if (charCounter >= 13) {
-    //   return false; //ch
-    // }
-    // return false;
     if (
       lineOfElementsWidth &&
       contentContainerWidth &&
@@ -127,32 +136,84 @@ function Calculator({}: Props) {
       case '-':
       case 'x':
       case '÷':
-        addElementToDisplay(actualElement);
+        if (lastHistoryElement == '=') {
+          setHistory([]);
+          setHistory([...display, actualElement]);
+        } else if (lastHistoryElement == actualElement) {
+          // avoid adding two signs
+          return;
+        } else if (signs.includes(lastHistoryElement)) {
+          // change sign
+          history.pop();
+          addElementToHistory(actualElement);
+        } else {
+          addElementToHistory(actualElement);
+        }
         break;
       case '<-':
-        eraseLastNumber();
-        if (display.length == 0 || (display.length == 1 && display[0] == '')) {
-          setDisplay(['0']);
-        } else {
-          setDisplay([...display]);
+        if (!signs.includes(lastHistoryElement)) {
+          if (lastHistoryElement != '=') {
+            eraseLastNumber();
+            setDisplay([...display]);
+            setHistory([...history]);
+          } else if (lastHistoryElement == '=') {
+            setHistory([display[0]]);
+            return;
+          } else if (
+            display.length == 0 ||
+            (display.length == 1 && display[0] == '')
+          ) {
+            setDisplay(['0']);
+          }
         }
         break;
       case 'CE':
         setDisplay(['0']);
+        setHistory([]);
         break;
       case 'C':
         setDisplay(['0']);
+        setHistory([]);
         break;
       case '=':
-        setDisplay([calculateDisplay().replace(/\./g, ',')]);
+        if (lastHistoryElement == '=') {
+          history[0] = display[0];
+          history.pop();
+          setHistory([...history]);
+          console.log('history before calcul : ', history);
+          setDisplay([calculateHistory().replace(/\./g, ',')]);
+          console.log('history after calcul : ', history);
+          replaceAlternativeSigns(history);
+          addElementToHistory(actualElement);
+        } else if (signs.includes(lastHistoryElement)) {
+          return;
+        } else {
+          //calcul final
+          addElementToHistory(actualElement);
+          setDisplay([calculateHistory().replace(/\./g, ',')]);
+        }
         break;
       default:
-        if (lastDisplayedElement.includes(',') && actualElement == ',') {
+        if (lastHistoryElement == '=') {
+          if (actualElement == ',') {
+            setHistory(['0,']);
+            setDisplay(['0,']);
+          } else {
+            setDisplay([actualElement]);
+            setHistory([actualElement]);
+          }
+        } else if (signs.includes(lastHistoryElement)) {
+          // clean display for new operation
+          display.pop();
+          addElementToDisplay(actualElement);
+          addElementToHistory(actualElement);
+        } else if (lastDisplayedElement.includes(',') && actualElement == ',') {
           return;
         } else if (display.length == 1 && display[0] == '0') {
           //replace 0 with actual number if only 0 is displayed at screen
           display.pop();
           addElementToDisplay(actualElement);
+          addElementToHistory(actualElement);
         } else if (
           //if lastElement = number : add to it
           display.length > 0 &&
@@ -160,8 +221,10 @@ function Calculator({}: Props) {
           actualElement != 'x²'
         ) {
           const tempLastNumber = display.pop() + actualElement;
+          history.pop();
           console.log('lastNumber : ', tempLastNumber);
           addElementToDisplay(tempLastNumber);
+          addElementToHistory(tempLastNumber);
         } else {
           // add to the next place , if x² it adds ² (so it shows ²)
           addElementToDisplay(transformChar());
@@ -172,6 +235,7 @@ function Calculator({}: Props) {
 
   useEffect(() => {
     console.log('display : ', display);
+    console.log('history : ', history);
   }, [display]);
 
   return (
@@ -181,7 +245,9 @@ function Calculator({}: Props) {
       </div>
       <header>
         <div className="contentContainer" id="contentContainer">
-          <span className="calculHistory">{display.join(' ')}</span>
+          <span className="calculHistory">
+            {history.map((element) => element)}
+          </span>
           <span
             id="lineOfElements"
             className={`lineOfElements ${'reduceFontSize'}`}
@@ -212,8 +278,9 @@ export default Calculator;
 SQRT
 Couper après après la virgule si trop de 0 exemple : 12.60000001 -> 12.6
 Réduire la font-size si trop de nombres : somme des char = 13 on reduit
-Afficher l'historique de calcul en haut en petit
-
+CE et C différence
+Resize la calculette
+Responsive
 Bonus :
 Espacer les nombres quand nécessaire : 100 000 / 50 000 / 5 000
 */

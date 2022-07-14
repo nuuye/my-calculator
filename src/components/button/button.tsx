@@ -1,16 +1,15 @@
-import React from "react";
-import "./button.scss";
+import React from 'react';
+import './button.scss';
 
 type Props = {
   character: string;
-  whiteBackGround?: Boolean;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
 };
-function Button({ character, whiteBackGround = false, onClick }: Props) {
+function Button({ character, onClick }: Props) {
   return (
     <button
       onClick={onClick}
-      className={`container ${whiteBackGround && "whiteBackGround"}`}
+      className={`container ${character == '=' && 'whiteBackGround'}`}
     >
       <span>{character}</span>
     </button>
