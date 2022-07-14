@@ -7,6 +7,7 @@ import {
   derivative,
   e,
   evaluate,
+  forEach,
   log,
   pi,
   pow,
@@ -16,11 +17,15 @@ import {
 
 type Props = {};
 function Calculator({}: Props) {
-  const [value, setValue] = useState<number>(0);
+  const [history, setHistory] = useState<string[]>([]);
   const [display, setDisplay] = useState<string[]>(['0']);
   const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   const signs = ['+', '-', '*', '÷'];
   const lastDisplayedElement = display[display.length - 1];
+  const contentContainerWidth =
+    document.getElementById('contentContainer')?.offsetWidth;
+  const lineOfElementsWidth =
+    document.getElementById('lineOfElements')?.offsetWidth;
 
   const characterList: Array<string> = [
     '%',
@@ -87,6 +92,27 @@ function Calculator({}: Props) {
     display.push(slicedLastChar);
   };
 
+  const hasToBeReduced = () => {
+    // let charCounter = 0;
+    // display.forEach((element) => {
+    //   for (var char = 0; char < element.length; char++) {
+    //     charCounter++;
+    //   }
+    // });
+    // if (charCounter >= 13) {
+    //   return false; //ch
+    // }
+    // return false;
+    if (
+      lineOfElementsWidth &&
+      contentContainerWidth &&
+      lineOfElementsWidth + 16 >= contentContainerWidth
+    ) {
+      return true;
+    }
+    return false;
+  };
+
   const handleClick = (event: any) => {
     const actualElement = event.target.innerText;
     const transformChar = () => {
@@ -143,7 +169,7 @@ function Calculator({}: Props) {
         break;
     }
   };
-  const testString = '103.5';
+
   useEffect(() => {
     console.log('display : ', display);
   }, [display]);
@@ -154,8 +180,14 @@ function Calculator({}: Props) {
         <span>Standard calculator</span>
       </div>
       <header>
-        <div className="contentContainer">
-          <span>{display.map((element) => element)}</span>
+        <div className="contentContainer" id="contentContainer">
+          <span className="calculHistory">{display.join(' ')}</span>
+          <span
+            id="lineOfElements"
+            className={`lineOfElements ${'reduceFontSize'}`}
+          >
+            {display.map((element) => element)}
+          </span>
         </div>
       </header>
       <body>
@@ -179,6 +211,9 @@ export default Calculator;
 /*
 SQRT
 Couper après après la virgule si trop de 0 exemple : 12.60000001 -> 12.6
-Réduire la font-size si trop de nombres
+Réduire la font-size si trop de nombres : somme des char = 13 on reduit
 Afficher l'historique de calcul en haut en petit
+
+Bonus :
+Espacer les nombres quand nécessaire : 100 000 / 50 000 / 5 000
 */
