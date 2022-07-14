@@ -63,7 +63,6 @@ function Calculator({}: Props) {
         display[i] = '^2';
       } else if (display[i].includes(',')) {
         display[i] = display[i].replace(/,/g, '.');
-        console.log('here : ', display[i]);
       }
     }
     return evaluate(display.join(' ')).toString();
@@ -122,7 +121,10 @@ function Calculator({}: Props) {
         setDisplay([calculateDisplay().replace(/\./g, ',')]);
         break;
       default:
-        if (display.length == 1 && display[0] == '0') {
+        if (lastDisplayedElement.includes(',') && actualElement == ',') {
+          return;
+        } else if (display.length == 1 && display[0] == '0') {
+          //replace 0 with actual number if only 0 is displayed at screen
           display.pop();
           addElementToDisplay(actualElement);
         } else if (
@@ -175,7 +177,8 @@ export default Calculator;
 
 //TODO
 /*
-Bloquer le delete 0 au début et le remplacer par la valeur du premier elem cliqué pour pas avoir 02
-Bloquer l'ajout de virgule si le nombre actuelle possède déjà une virgule
 SQRT
+Couper après après la virgule si trop de 0 exemple : 12.60000001 -> 12.6
+Réduire la font-size si trop de nombres
+Afficher l'historique de calcul en haut en petit
 */
