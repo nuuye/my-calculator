@@ -136,7 +136,9 @@ function Calculator({}: Props) {
       case '-':
       case 'x':
       case '÷':
-        if (lastHistoryElement == '=') {
+        if (lastDisplayedElement[lastDisplayedElement.length - 1] == ',') {
+          return;
+        } else if (lastHistoryElement == '=') {
           setHistory([]);
           setHistory([...display, actualElement]);
         } else if (lastHistoryElement == actualElement) {
@@ -156,6 +158,13 @@ function Calculator({}: Props) {
             eraseLastNumber();
             setDisplay([...display]);
             setHistory([...history]);
+            if (
+              display.length == 0 ||
+              (display.length == 1 && display[0] == '')
+            ) {
+              setDisplay(['0']);
+              setHistory(['0']);
+            }
           } else if (lastHistoryElement == '=') {
             setHistory([display[0]]);
             return;
@@ -176,13 +185,13 @@ function Calculator({}: Props) {
         setHistory([]);
         break;
       case '=':
-        if (lastHistoryElement == '=') {
+        if (lastDisplayedElement[lastDisplayedElement.length - 1] == ',') {
+          return;
+        } else if (lastHistoryElement == '=') {
           history[0] = display[0];
           history.pop();
           setHistory([...history]);
-          console.log('history before calcul : ', history);
           setDisplay([calculateHistory().replace(/\./g, ',')]);
-          console.log('history after calcul : ', history);
           replaceAlternativeSigns(history);
           addElementToHistory(actualElement);
         } else if (signs.includes(lastHistoryElement)) {
@@ -193,25 +202,44 @@ function Calculator({}: Props) {
           setDisplay([calculateHistory().replace(/\./g, ',')]);
         }
         break;
+      case ',':
+        if (verifyNumber(lastDisplayedElement)) {
+          const tempNumber = display.pop() + ',';
+          history.pop();
+          display.push(tempNumber);
+          history.push(tempNumber);
+          setDisplay([...display]);
+          setHistory([...history]);
+        }
+        if (lastHistoryElement == '=') {
+          //if press , and last is = replace by 0,
+          setHistory(['0,']);
+          setDisplay(['0,']);
+        } else if (
+          (lastDisplayedElement == '0' && lastHistoryElement == '0') ||
+          lastHistoryElement == '' ||
+          history.length == 0
+        ) {
+          setDisplay(['0,']);
+          setHistory(['0,']);
+        } else if (lastDisplayedElement.includes(',')) {
+          return;
+        }
+        break;
       default:
         if (lastHistoryElement == '=') {
-          if (actualElement == ',') {
-            setHistory(['0,']);
-            setDisplay(['0,']);
-          } else {
-            setDisplay([actualElement]);
-            setHistory([actualElement]);
-          }
+          // reset screen if last is ' = '
+          setDisplay([actualElement]);
+          setHistory([actualElement]);
         } else if (signs.includes(lastHistoryElement)) {
           // clean display for new operation
           display.pop();
           addElementToDisplay(actualElement);
           addElementToHistory(actualElement);
-        } else if (lastDisplayedElement.includes(',') && actualElement == ',') {
-          return;
         } else if (display.length == 1 && display[0] == '0') {
           //replace 0 with actual number if only 0 is displayed at screen
           display.pop();
+          history.pop();
           addElementToDisplay(actualElement);
           addElementToHistory(actualElement);
         } else if (
@@ -232,6 +260,18 @@ function Calculator({}: Props) {
         break;
     }
   };
+
+  // const removeEmptyStrings = () => {
+  //   if (display.includes('')) {
+  //     const indexDisplay = display.indexOf('');
+  //     display.slice(indexDisplay, 1);
+  //     setDisplay([...display]);
+  //   } else if (history.includes('')) {
+  //     const indexHistory = history.indexOf('');
+  //     display.slice(indexHistory, 1);
+  //     setHistory([...history]);
+  //   }
+  // };
 
   useEffect(() => {
     console.log('display : ', display);
