@@ -56,12 +56,25 @@ function Calculator({}: Props) {
     '=',
   ];
 
+  const roundBigNumbers = (stringList: string[]) => {
+    const newString: string[] = [];
+    stringList.forEach((string) => {
+      newString.push(
+        (
+          Math.round((parseFloat(string) + Number.EPSILON) * 10000) / 10000
+        ).toString()
+      );
+    });
+    return newString;
+  };
   const addElementToDisplay = (element: string) => {
     display && setDisplay([...display, element]);
   };
 
   const addElementToHistory = (element: string) => {
-    history && setHistory([...history, element]);
+    if (history.length == 0) {
+      history.push(element);
+    } else history && setHistory([...history, element]);
   };
 
   const calculateHistory = () => {
@@ -76,7 +89,8 @@ function Calculator({}: Props) {
         history[i] = history[i].replace(/,/g, '.');
       }
     }
-    return evaluate(history.join(' ')).toString();
+    console.log('rounded History', history);
+    return roundBigNumbers([evaluate(history.join(' ')).toString()]);
   };
 
   const replaceAlternativeSigns = (stringList: string[]) => {
@@ -85,6 +99,8 @@ function Calculator({}: Props) {
         stringList[i] = '÷';
       } else if (stringList[i] == '*') {
         stringList[i] = 'x';
+      } else if (stringList[i] == '^2') {
+        stringList[i] = '²';
       }
     }
   };
@@ -137,6 +153,7 @@ function Calculator({}: Props) {
       case 'x':
       case '÷':
         if (lastDisplayedElement[lastDisplayedElement.length - 1] == ',') {
+          // no signs after a comma
           return;
         } else if (lastHistoryElement == '=') {
           setHistory([]);
@@ -149,7 +166,9 @@ function Calculator({}: Props) {
           history.pop();
           addElementToHistory(actualElement);
         } else {
-          addElementToHistory(actualElement);
+          // addElementToHistory(actualElement);
+          history.push(actualElement);
+          setHistory([...history]);
         }
         break;
       case '⌫':
@@ -185,33 +204,42 @@ function Calculator({}: Props) {
         setHistory([]);
         break;
       case '=':
-        if (lastDisplayedElement[lastDisplayedElement.length - 1] == ',') {
+        if (
+          lastDisplayedElement[lastDisplayedElement.length - 1] == ',' ||
+          (display.length == 1 && display[0] == '0')
+        ) {
           return;
         } else if (lastHistoryElement == '=') {
+          if (history[0] == '-' && history[1][0] == '-') {
+            // -- problem
+            history.shift();
+          }
           history[0] = display[0];
-          history.pop();
+          history.pop(); // remove =
           setHistory([...history]);
-          setDisplay([calculateHistory().replace(/\./g, ',')]);
+          setDisplay([calculateHistory()[0].replace(/\./g, ',')]);
           replaceAlternativeSigns(history);
           addElementToHistory(actualElement);
         } else if (signs.includes(lastHistoryElement)) {
           return;
         } else {
           //calcul final
-          addElementToHistory(actualElement);
-          setDisplay([calculateHistory().replace(/\./g, ',')]);
+          addElementToHistory(transformChar());
+          setDisplay([calculateHistory()[0].replace(/\./g, ',')]);
         }
         break;
       case ',':
-        if (verifyNumber(lastDisplayedElement)) {
+        if (
+          verifyNumber(lastDisplayedElement) &&
+          !lastDisplayedElement.includes(',')
+        ) {
           const tempNumber = display.pop() + ',';
           history.pop();
           display.push(tempNumber);
           history.push(tempNumber);
           setDisplay([...display]);
           setHistory([...history]);
-        }
-        if (lastHistoryElement == '=') {
+        } else if (lastHistoryElement == '=') {
           //if press , and last is = replace by 0,
           setHistory(['0,']);
           setDisplay(['0,']);
@@ -224,58 +252,93 @@ function Calculator({}: Props) {
           setHistory(['0,']);
         } else if (lastDisplayedElement.includes(',')) {
           return;
+        } else {
+          // -3
+          const tempNumber = display.pop() + ','; //3, display = -
+          history.pop(); //-
+          display.push(tempNumber); //-3,
+          history.push(tempNumber);
+          if (history[0] == '-' && history[1][0] == '-') {
+            history.shift();
+          }
+          setDisplay([...display]);
+          setHistory([...history]);
+        }
+        break;
+      case 'x²':
+        if (signs.includes(lastHistoryElement)) {
+          return;
+        } else if (lastHistoryElement == '=') {
+          setHistory([lastDisplayedElement, '²']);
+          console.log('hello', history);
+          addElementToDisplay('²');
+        } else {
+          if (history.length == 0) {
+            addElementToHistory('0');
+          }
+          addElementToDisplay(transformChar());
+          addElementToHistory(transformChar());
+        }
+        break;
+      case '+/-':
+        if (history[0] == '-') {
+          history.shift();
+          display.shift();
+          setHistory([...history]);
+          setDisplay([...display]);
+        } else {
+          history.unshift('-');
+          display.unshift('-');
+          setHistory([...display]);
+          setDisplay([...display]);
         }
         break;
       default:
-        if (lastHistoryElement == '=') {
+        if (lastHistoryElement == '-') {
+          display.pop();
+          history.pop();
+          addElementToDisplay('-' + actualElement);
+          addElementToHistory('-' + actualElement);
+        } else if (lastHistoryElement == '=') {
           // reset screen if last is ' = '
           setDisplay([actualElement]);
           setHistory([actualElement]);
         } else if (signs.includes(lastHistoryElement)) {
           // clean display for new operation
+          if (lastDisplayedElement == '²') {
+            display.pop();
+          }
           display.pop();
           addElementToDisplay(actualElement);
           addElementToHistory(actualElement);
         } else if (display.length == 1 && display[0] == '0') {
           //replace 0 with actual number if only 0 is displayed at screen
+          console.log('history length', history);
           display.pop();
-          history.pop();
+          if (history.length != 1 && !signs.includes(history[0])) {
+            history.pop();
+          }
           addElementToDisplay(actualElement);
           addElementToHistory(actualElement);
         } else if (
           //if lastElement = number : add to it
           display.length > 0 &&
-          verifyNumber(lastDisplayedElement) &&
-          actualElement != 'x²'
+          verifyNumber(lastDisplayedElement)
         ) {
           const tempLastNumber = display.pop() + actualElement;
           history.pop();
-          console.log('lastNumber : ', tempLastNumber);
           addElementToDisplay(tempLastNumber);
           addElementToHistory(tempLastNumber);
         } else {
-          // add to the next place , if x² it adds ² (so it shows ²)
           addElementToDisplay(transformChar());
         }
         break;
     }
   };
 
-  // const removeEmptyStrings = () => {
-  //   if (display.includes('')) {
-  //     const indexDisplay = display.indexOf('');
-  //     display.slice(indexDisplay, 1);
-  //     setDisplay([...display]);
-  //   } else if (history.includes('')) {
-  //     const indexHistory = history.indexOf('');
-  //     display.slice(indexHistory, 1);
-  //     setHistory([...history]);
-  //   }
-  // };
-
   useEffect(() => {
-    console.log('display : ', display);
     console.log('history : ', history);
+    console.log('display : ', display);
   }, [display]);
 
   return (
@@ -316,11 +379,11 @@ export default Calculator;
 //TODO
 /*
 SQRT
-Couper après après la virgule si trop de 0 exemple : 12.60000001 -> 12.6
-Réduire la font-size si trop de nombres : somme des char = 13 on reduit
 CE et C différence
-Resize la calculette
-nombres negatifs quand on delete il reste le -
+ajouter la fonctionnalité +/-
+supprimer le -
+-6-3 = =
+
 Bonus :
 Espacer les nombres quand nécessaire : 100 000 / 50 000 / 5 000
 */
