@@ -1,26 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import './calculator.scss';
 import Button from '../button/button';
-import {
-  atan2,
-  chain,
-  derivative,
-  e,
-  evaluate,
-  forEach,
-  log,
-  pi,
-  pow,
-  round,
-  sqrt,
-  string,
-} from 'mathjs';
+import { evaluate } from 'mathjs';
 
 type Props = {};
 function Calculator({}: Props) {
   const [history, setHistory] = useState<string[]>([]);
   const [display, setDisplay] = useState<string[]>(['0']);
-  const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ','];
   const signs = ['+', '-', '*', '÷', 'x', '/'];
   const lastDisplayedElement = display[display.length - 1];
   const lastHistoryElement = history[history.length - 1];
@@ -89,7 +76,6 @@ function Calculator({}: Props) {
         history[i] = history[i].replace(/,/g, '.');
       }
     }
-    console.log('rounded History', history);
     return roundBigNumbers([evaluate(history.join(' ')).toString()]);
   };
 
@@ -106,8 +92,12 @@ function Calculator({}: Props) {
   };
 
   const verifyNumber = (element: string) => {
+    let stringWithoutSigns = element;
     for (var i = 0; i < element.length; i++) {
-      if (!numbers.includes(element[i])) {
+      if (element[0] == '+' || '-') {
+        stringWithoutSigns = element.substring(1);
+      }
+      if (!numbers.includes(stringWithoutSigns[i])) {
         return false;
       } else {
         return true;
@@ -125,17 +115,6 @@ function Calculator({}: Props) {
     const slicedLastCharForHistory = lastHistoryElement.slice(0, -1);
     history.pop();
     history.push(slicedLastCharForHistory);
-  };
-
-  const hasToBeReduced = () => {
-    if (
-      lineOfElementsWidth &&
-      contentContainerWidth &&
-      lineOfElementsWidth + 16 >= contentContainerWidth
-    ) {
-      return true;
-    }
-    return false;
   };
 
   const handleClick = (event: any) => {
@@ -204,10 +183,7 @@ function Calculator({}: Props) {
         setHistory([]);
         break;
       case '=':
-        if (
-          lastDisplayedElement[lastDisplayedElement.length - 1] == ',' ||
-          (display.length == 1 && display[0] == '0')
-        ) {
+        if (lastDisplayedElement[lastDisplayedElement.length - 1] == ',') {
           return;
         } else if (lastHistoryElement == '=') {
           if (history[0] == '-' && history[1][0] == '-') {
@@ -244,10 +220,13 @@ function Calculator({}: Props) {
           setHistory(['0,']);
           setDisplay(['0,']);
         } else if (
-          (lastDisplayedElement == '0' && lastHistoryElement == '0') ||
+          (lastDisplayedElement == '0' &&
+            lastHistoryElement == '0' &&
+            history.length < 2) ||
           lastHistoryElement == '' ||
           history.length == 0
         ) {
+          //6.3+0
           setDisplay(['0,']);
           setHistory(['0,']);
         } else if (lastDisplayedElement.includes(',')) {
@@ -270,7 +249,6 @@ function Calculator({}: Props) {
           return;
         } else if (lastHistoryElement == '=') {
           setHistory([lastDisplayedElement, '²']);
-          console.log('hello', history);
           addElementToDisplay('²');
         } else {
           if (history.length == 0) {
@@ -293,6 +271,12 @@ function Calculator({}: Props) {
           setDisplay([...display]);
         }
         break;
+      case '%':
+        break;
+      case '1/x':
+        break;
+      case '²√x':
+        break;
       default:
         if (lastHistoryElement == '-') {
           display.pop();
@@ -308,16 +292,12 @@ function Calculator({}: Props) {
           if (lastDisplayedElement == '²') {
             display.pop();
           }
-          display.pop();
-          addElementToDisplay(actualElement);
+          setDisplay([actualElement]);
           addElementToHistory(actualElement);
         } else if (display.length == 1 && display[0] == '0') {
           //replace 0 with actual number if only 0 is displayed at screen
-          console.log('history length', history);
           display.pop();
-          if (history.length != 1 && !signs.includes(history[0])) {
-            history.pop();
-          }
+          history.pop();
           addElementToDisplay(actualElement);
           addElementToHistory(actualElement);
         } else if (
@@ -331,15 +311,13 @@ function Calculator({}: Props) {
           addElementToHistory(tempLastNumber);
         } else {
           addElementToDisplay(transformChar());
+          addElementToHistory(actualElement);
         }
         break;
     }
   };
 
-  useEffect(() => {
-    console.log('history : ', history);
-    console.log('display : ', display);
-  }, [display]);
+  useEffect(() => {}, [display]);
 
   return (
     <div className="mainContainer">
@@ -375,15 +353,3 @@ function Calculator({}: Props) {
 }
 
 export default Calculator;
-
-//TODO
-/*
-SQRT
-CE et C différence
-ajouter la fonctionnalité +/-
-supprimer le -
--6-3 = =
-
-Bonus :
-Espacer les nombres quand nécessaire : 100 000 / 50 000 / 5 000
-*/
