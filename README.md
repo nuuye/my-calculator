@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# General Info
 
 This project is a replica of the classic Windows Calculator built using React.js. The goal of this project was to create a functional and visually similar version of the original calculator using modern web development technologies.
 
