@@ -11,10 +11,6 @@ function Calculator({}: Props) {
   const signs = ['+', '-', '*', '÷', 'x', '/'];
   const lastDisplayedElement = display[display.length - 1];
   const lastHistoryElement = history[history.length - 1];
-  const contentContainerWidth =
-    document.getElementById('contentContainer')?.offsetWidth;
-  const lineOfElementsWidth =
-    document.getElementById('lineOfElements')?.offsetWidth;
 
   const characterList: Array<string> = [
     '%',
@@ -202,6 +198,7 @@ function Calculator({}: Props) {
           //calcul final
           addElementToHistory(transformChar());
           setDisplay([calculateHistory()[0].replace(/\./g, ',')]);
+          console.log('het');
         }
         break;
       case ',':
@@ -226,16 +223,15 @@ function Calculator({}: Props) {
           lastHistoryElement == '' ||
           history.length == 0
         ) {
-          //6.3+0
           setDisplay(['0,']);
           setHistory(['0,']);
         } else if (lastDisplayedElement.includes(',')) {
           return;
         } else {
           // -3
-          const tempNumber = display.pop() + ','; //3, display = -
+          const tempNumber = display.pop() + ',';
           history.pop(); //-
-          display.push(tempNumber); //-3,
+          display.push(tempNumber);
           history.push(tempNumber);
           if (history[0] == '-' && history[1][0] == '-') {
             history.shift();
@@ -302,14 +298,15 @@ function Calculator({}: Props) {
           addElementToHistory(actualElement);
         } else if (
           //if lastElement = number : add to it
-          display.length > 0 &&
-          verifyNumber(lastDisplayedElement)
+          display.length > 0
         ) {
+          console.log('test add');
           const tempLastNumber = display.pop() + actualElement;
           history.pop();
           addElementToDisplay(tempLastNumber);
           addElementToHistory(tempLastNumber);
         } else {
+          console.log('test add normal');
           addElementToDisplay(transformChar());
           addElementToHistory(actualElement);
         }
