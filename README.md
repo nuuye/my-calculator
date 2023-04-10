@@ -1,3 +1,7 @@
+![image](https://user-images.githubusercontent.com/50216605/230980372-feab4e2b-6351-4e7b-93a1-586219d0c83c.png)
+
+
+
 # General Info
 
 This project is a replica of the classic Windows Calculator built using React.js. The goal of this project was to create a functional and visually similar version of the original calculator using modern web development technologies.
